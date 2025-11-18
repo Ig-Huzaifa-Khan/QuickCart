@@ -11,6 +11,12 @@ const Navbar = () => {
 
   const { openSignIn } = useClerk();
 
+  const handleSignIn = () => {
+    if (!user) {
+      openSignIn();
+    }
+  };
+
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
       <Image
@@ -67,7 +73,7 @@ const Navbar = () => {
           </>
         ) : (
           <button
-            onClick={openSignIn}
+            onClick={handleSignIn}
             className="flex items-center gap-2 hover:text-gray-900 transition"
           >
             <Image src={assets.user_icon} alt="user icon" />
@@ -114,7 +120,7 @@ const Navbar = () => {
           </>
         ) : (
           <button
-            onClick={openSignIn}
+            onClick={handleSignIn}
             className="flex items-center gap-2 hover:text-gray-900 transition"
           >
             <Image src={assets.user_icon} alt="user icon" />

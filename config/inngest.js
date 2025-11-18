@@ -18,17 +18,24 @@ async ({event}) => {
     const{
         id, first_name, last_name, email_addresses, image_url
     } = event.data
+    const email = (email_addresses && email_addresses[0] && (email_addresses[0].email_address || email_addresses[0].email)) || event.data.email || '';
 
     const userData ={
-        _id:id,
-        email: email_addresses[0].email_adderess,
-        name: first_name + ' '+ last_name,
-        imageUrl: image_url
+        _id: id,
+        email: email,
+        name: `${first_name || ''} ${last_name || ''}`.trim(),
+        imageUrl: image_url || ''
     }
 
-    await connectDB()
-    await User.create(userData)
+    try {
+        await connectDB()
+        // Use upsert to create or update the user record reliably
+        await User.findOneAndUpdate({_id: id}, userData, {upsert: true, setDefaultsOnInsert: true})
+    } catch (err) {
+        console.error('syncUserCreation error:', err)
+        throw err
     }
+}
 )
 
 // Inngest function to updare user data in database
@@ -42,17 +49,22 @@ export const syncUserUpdation = inngest.createFunction(
          const{
         id, first_name, last_name, email_addresses, image_url
     } = event.data
+        const email = (email_addresses && email_addresses[0] && (email_addresses[0].email_address || email_addresses[0].email)) || event.data.email || '';
 
-    const userData ={
-        _id:id,
-        email: email_addresses[0].email_adderess,
-        name: first_name + ' '+ last_name,
-        imageUrl: image_url
-    }
+        const userData ={
+            _id: id,
+            email: email,
+            name: `${first_name || ''} ${last_name || ''}`.trim(),
+            imageUrl: image_url || ''
+        }
 
-    await connectDB()
-
-    await User.findByIdAndUpdate(id, userData)
+        try {
+            await connectDB()
+            await User.findOneAndUpdate({_id: id}, userData, {upsert: true, new: true})
+        } catch (err) {
+            console.error('syncUserUpdation error:', err)
+            throw err
+        }
     }
 )
 
@@ -67,9 +79,12 @@ export const syncUserDeletion = inngest.createFunction(
     },
     async({event}) => {
         const {id } = event.data
-
-        await connectDB()
-
-        await User.findByIdAndDelete(id)
+        try {
+            await connectDB()
+            await User.findByIdAndDelete(id)
+        } catch (err) {
+            console.error('syncUserDeletion error:', err)
+            throw err
+        }
     }
 )

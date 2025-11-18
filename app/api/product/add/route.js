@@ -1,5 +1,9 @@
 import authSeller from '@/lib/authSeller';
-import { v2 } from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+import { NextResponse } from 'next/server';
+import { getAuth } from '@clerk/nextjs/server';
+import Product from '@/models/product';
+import connectDB from '@/config/db';
 
 // configure cloudinary 
 
@@ -17,7 +21,7 @@ export async function POST(request) {
         const isSeller = await authSeller(userId)
 
         if (!isSeller) {
-            return nextResponse.json({success: false, message: 'Unauthorized Access'}, {status: 401})
+            return NextResponse.json({success: false, message: 'Unauthorized Access'}, {status: 401})
         }
 
         const formData = await request.formData()
@@ -35,7 +39,7 @@ export async function POST(request) {
         const files = formData.getAll('images');
 
         if(!files || files.length === 0){
-            return nextResponse.json({success: false, message: 'no files uploaded'}, {status: 401})
+            return NextResponse.json({success: false, message: 'no files uploaded'}, {status: 400})
         }
 
         const result = await Promise.all(files.map(async (file) => {
@@ -77,7 +81,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, message: 'Product added successfully', newProduct })
  
     } catch (error) {
-
-        NextResponse.json({ success: false, message: error.message } , { status: 500 } )
+        console.error('Add product error:', error);
+        return NextResponse.json({ success: false, message: error.message } , { status: 500 } )
     }
 }

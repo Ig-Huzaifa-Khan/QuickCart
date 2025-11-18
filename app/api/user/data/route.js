@@ -7,17 +7,28 @@ export async function GET(request) {
     try {
         const { userId } = getAuth(request);
 
-        await connectDB();
-
-        const user  = await User.findById(userId);
-
-        if (!user) {
-            return NextResponse.json({ success:  false, message:"User not found"})
+        if (!userId) {
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
-        return NextResponse.json({ success: true, data: user })
+        await connectDB();
+
+        let user = await User.findById(userId);
+
+        // If user doesn't exist, create a new one
+        if (!user) {
+            user = await User.create({
+                _id: userId,
+                name: "User",
+                email: "",
+                cartItems: {}
+            });
+        }
+
+        return NextResponse.json({ success: true, user })
     } catch (error) {
-        return NextResponse.json({ success: false, message: error.message })
+        console.error('User data fetch error:', error);
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 })
     }
 }
  

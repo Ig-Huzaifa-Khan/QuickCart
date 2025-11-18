@@ -8,11 +8,11 @@ const userSchema = new mongoose.Schema({
     },
     name:{
         type: String,
-        required: true
+        required: false
     },
     email:{
         type: String,
-        required: true
+        required: false
     },
     imageUrl: {
         type: String,
@@ -25,6 +25,6 @@ const userSchema = new mongoose.Schema({
     }
 }, {minimize: false})
 
-const User = mongoose.models.user || mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default User; 
