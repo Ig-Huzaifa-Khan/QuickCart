@@ -1,5 +1,7 @@
 import { inngest } from "@/config/inngest";
 import Product from "@/models/product";
+import User from "@/models/user";
+import connectDB from "@/config/db";
 import { getAuth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server";
 
@@ -10,20 +12,27 @@ export async function POST(request) {
 
         const { userId } = getAuth(request)
 
+        if (!userId) {
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+        }
+
         const { address, items } = await request.json();
 
-        if(!address || items.length === 0){
+        if(!address || !items || items.length === 0){
 
             return NextResponse.json({success: false, message: 'Invalid Data'}, {status: 400})
         }
 
+        await connectDB();
+
         // calculate amount using items
-
-        const amount = await items.reduce(async (acc, item) => {
-            const product = await Product.findById(item.productId);
-
-            return acc + product.offerPrice * item.quantity;
-         },0)
+        let amount = 0;
+        for (const item of items) {
+            const product = await Product.findById(item.product);
+            if (product) {
+                amount += product.offerPrice * item.quantity;
+            }
+        }
 
          await inngest.send({
             name: "order/created",
@@ -36,13 +45,14 @@ export async function POST(request) {
             }
          })
 
-         // clear user cart after order creation - done in inngest function
+         // clear user cart after order creation
 
          const user = await User.findById(userId)
 
-         user.cartItems = {}
-
-         await user.save()
+         if (user) {
+            user.cartItems = {}
+            await user.save()
+         }
 
          return NextResponse.json({ success: true, message: 'Order placed successfully' }, { status: 200 })
 
