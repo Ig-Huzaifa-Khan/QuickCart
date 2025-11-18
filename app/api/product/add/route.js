@@ -60,12 +60,24 @@ export async function POST(request) {
 
     const image = result.map(result => result.secure_url)
 
+
+    await connectDB()
+
+    const newProduct = await Product.create({
+        userId,
+        name,
+        description,
+        price:Number(price),
+        category,
+        offerPrice:Number(offerPrice),
+        image,
+        date: Date.now()
+    })
+
+    return NextResponse.json({ success: true, message: 'Product added successfully', newProduct })
+ 
     } catch (error) {
 
-        return new Response(JSON.stringify({
-            success: false,
-            message: error.message
-
-        }), { status: 500 });  
+        NextResponse.json({ success: false, message: error.message } , { status: 500 } )
     }
 }
