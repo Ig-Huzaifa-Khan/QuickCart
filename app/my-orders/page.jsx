@@ -1,27 +1,50 @@
 'use client';
 import React, { useEffect, useState } from "react";
-import { assets, orderDummyData } from "@/assets/assets";
+import { assets } from "@/assets/assets";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import Loading from "@/components/Loading";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 const MyOrders = () => {
 
-    const { currency } = useAppContext();
+    const { currency, getToken, user } = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchOrders = async () => {
-        setOrders(orderDummyData)
-        setLoading(false);
+        try {
+            const token = await getToken();
+            console.log('🔍 Fetching orders...');
+            const { data } = await axios.get('/api/order/list', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            console.log('📦 API Response:', data);
+            console.log('📊 Number of orders:', data.orders?.length || 0);
+            
+            if (data.success) {
+                setOrders(data.orders);
+            } else {
+                toast.error(data.message);
+            }
+            setLoading(false);
+        } catch (error) {
+            console.error('❌ Error fetching orders:', error);
+            toast.error('Failed to fetch orders');
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
-        fetchOrders();
-    }, []);
+        if (user) {
+            fetchOrders();
+        }
+    }, [user]);
 
     return (
         <>
@@ -30,7 +53,11 @@ const MyOrders = () => {
                 <div className="space-y-5">
                     <h2 className="text-lg font-medium mt-6">My Orders</h2>
                     {loading ? <Loading /> : (<div className="max-w-5xl border-t border-gray-300 text-sm">
-                        {orders.map((order, index) => (
+                        {orders.length === 0 ? (
+                            <div className="p-10 text-center text-gray-500">
+                                <p>No orders yet</p>
+                            </div>
+                        ) : orders.map((order, index) => (
                             <div key={index} className="flex flex-col md:flex-row gap-5 justify-between p-5 border-b border-gray-300">
                                 <div className="flex-1 flex gap-5 max-w-80">
                                     <Image
