@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
     try{
         const { userId } = getAuth(request);
+        console.log('🔑 User ID from auth:', userId);
 
         if (!userId) {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -20,10 +21,13 @@ export async function GET(request) {
             .populate('address')
             .sort({ date: -1 });
 
+        console.log('📦 Found orders for user:', orders.length);
+        console.log('📊 Orders:', JSON.stringify(orders, null, 2));
+
         return NextResponse.json({ success: true, orders }, { status: 200 });
 
     } catch (error) {
-        console.error('Fetch orders error:', error);
+        console.error('❌ Fetch orders error:', error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
         
     }
